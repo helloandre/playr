@@ -14,3 +14,5 @@ Then from the /script folder, run `node playr.js` and you're good to go.
 ### TODOs ###
 
 * Create a script to control starting/stopping playr
+* Autocomplete search and play songs
+* Volume controls
