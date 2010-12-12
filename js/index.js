@@ -3,6 +3,7 @@ var site = window.location;
 
 /**
  * my own spiffy ajax wrapper
+ * because cache should always be false for this kind of stuff
  */
 function pajax(u, cb){
     $.ajax({
@@ -20,12 +21,20 @@ function init(){
     setTimeout("pajax('info', 'checkTime')", 1100);
 }
 
+/**
+ * set some globals to use in checkTime
+ */
 function setInit(data){
     artist = unescape(data.artist);
     title = unescape(data.title);
     duration = unescape(data.duration);
     first = unescape(data.elapsed);
 }
+
+/**
+ * checks to see if times are different (time has increased by 1 second)
+ * if not, assumes paused, set state to paused
+ */
 function checkTime(data){
     if (data != 0){
         second = data.elapsed;
@@ -35,16 +44,16 @@ function checkTime(data){
             $('#loader').fadeOut('fast', function(){
                 $('#artist').text(artist);
                 $('#title').text(title);
-                $('#data').fadeIn('fast');
-                $('#pause').fadeIn('fast');
+                $('#data, #pause, #next, #prev').fadeIn('fast');
+                $('#play').hide();
             });
         }
         else{
             // is paused
             $('#loader').fadeOut('fast', function(){
                 $('#title').text('Not Playing');
-                $('#play').fadeIn('fast');
-                $('#data').fadeIn('fast');
+                $('#data, #play, #next, #prev').fadeIn('fast');
+                $('#pause').hide();
             });
         }
     }
@@ -52,6 +61,10 @@ function checkTime(data){
         $('#title').text('An Error Occurred').fadeIn('fast');
     }
 }
+
+/**
+ * used to set currently playing after a pause
+ */
 function setPlaying(data){
     artist = unescape(data.artist);
     title = unescape(data.title);
@@ -63,6 +76,10 @@ function setPlaying(data){
     });
 
 }
+
+/**
+ * used to set artist/title after change
+ */
 function update(data){
     if (unescape(data.artist) != artist){
         artist = unescape(data.artist);
@@ -77,20 +94,30 @@ function update(data){
         });
     }
 }
+
+/**
+ * used as async callback after next/prev to update currently playing song
+ */
 function change(data){
-    setInterval("pajax('info', 'update')", 500); // .5
+    setTimeout("pajax('info', 'update')", 500); // .5 seconds
 }
 
+/**
+ * used to play or pause the song
+ */
 function play_pause(){
     pajax('play-pause', 'blank');
 }
 
+/**
+ * some things just don't need to do anything
+ */
 function blank(){}
 
 /**
- * interval to check and see which song is still playing
+ * interval to check and see which song is still playing (if at all)
  */
-setInterval("init()", 10000); // 5 seconds
+setInterval("init()", 5000); // 5 seconds
 
 $(function(){
     $('#play').live('click', function(e){

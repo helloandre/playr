@@ -11,62 +11,41 @@ var express = require('express'),
 var app = express.createServer();
 
 /**
- * regular info stuff
+ * handles all requests
  */
-app.get(/^\/info(.*)/, function(req, res){
-    child = exec("rhythmbox-client --print-playing-format='%ta;%tt;%td;%te'", function (error, stdout, stderr) {
-        if (error !== null) {
-            res.header('Content-Type', 'text/javascript');
-            res.send('0');
-        }
-        else {
-            res.header('Content-Type', 'text/javascript');
-            info = stdout.split(";");
-            res.send(req.query.callback+"({'artist':'"+escape(info[0])+"', 'title': '"+escape(info[1])+"', 'duration': '"+info[2]+"', 'elapsed': '"+info[3].trim()+"'})");
-        }
-    });
+app.get(/^\/(.*)/, function(req, res){
+    var execute_string = "";
 
-});
-/**
- * playing and pausing
- */
-app.get(/^\/play\-pause(.*)/, function(req, res){
-    child = exec("rhythmbox-client --play-pause", function (error, stdout, stderr) {
-        if (error !== null) {
-            res.send('0');
-        }
-        else {
-            res.header('Content-Type', 'text/javascript');
-            res.send(req.query.callback+'()');
-        }
-    });
+    switch (req.params[0]){
+        case "play-pause":
+            execute_string = "rhythmbox-client --play-pause";
+            break;
+        case "next":
+            execute_string = "rhythmbox-client --next";
+            break;
+        case "prev":
+            execute_string = "rhythmbox-client --previous";
+            break;
+        default: // typically 'info'... this is to prevent anything actually happening in the case of a mal-formed request
+            execute_string = "rhythmbox-client --print-playing-format='%ta;%tt;%td;%te'";
+            break;
+    }
 
-});
-/**
- * next
- */
-app.get(/^\/next(.*)/, function(req, res){
-    child = exec("rhythmbox-client --next", function (error, stdout, stderr) {
+    child = exec(execute_string, function (error, stdout, stderr){
+        res.header('Content-Type', 'text/javascript');
+        // error of some sort
         if (error !== null) {
             res.send('0');
         }
         else {
-            res.header('Content-Type', 'text/javascript');
-            res.send(req.query.callback+'()');
-        }
-    });
-});
-/**
- * next
- */
-app.get(/^\/prev(.*)/, function(req, res){
-    child = exec("rhythmbox-client --previous", function (error, stdout, stderr) {
-        if (error !== null) {
-            res.send('0');
-        }
-        else {
-            res.header('Content-Type', 'text/javascript');
-            res.send(req.query.callback+'()');
+            // info actually requires us returning something useful
+            if (req.params[0] == 'info'){
+                info = stdout.split(";");
+                res.send(req.query.callback+"({'artist':'"+escape(info[0])+"', 'title': '"+escape(info[1])+"', 'duration': '"+info[2]+"', 'elapsed': '"+info[3].trim()+"'})");
+            }
+            else {
+                res.send(req.query.callback+"()");
+            }
         }
     });
 });
